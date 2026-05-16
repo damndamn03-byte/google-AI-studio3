@@ -1,0 +1,6 @@
+{
+  "name": "Word 表格圖片填充工具",
+  "description": "上傳包含表格的 Word 範例檔與多張圖片，自動依序將圖片填入表格，並在空間不足時自動複製表格。",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
