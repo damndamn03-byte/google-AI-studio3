@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Upload, FileText, Image as ImageIcon, Download, Loader2, CheckCircle2, AlertCircle, Plus } from "lucide-react";
+import { Upload, FileText, Image as ImageIcon, Download, Loader2, CheckCircle2, AlertCircle, Plus, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 export default function App() {
@@ -62,9 +62,18 @@ export default function App() {
         throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      const responseClone = response.clone();
+      const data = await response.json().catch(async (e) => {
+        const text = await responseClone.text();
+        console.error("Failed to parse JSON response:", text);
+        if (text.includes("<!doctype html>") || text.includes("<html")) {
+          throw new Error("伺服器返回了 HTML 格式的錯誤。這通常表示路徑錯誤、伺服器重啟或處理超時。");
+        }
+        throw new Error("無法解析伺服器回應。可能是伺服器發生了未預期的錯誤。");
+      });
       setDownloadUrl(data.downloadUrl);
     } catch (err: any) {
+      console.error("Generate error:", err);
       setError(err.message);
     } finally {
       setIsGenerating(false);
@@ -114,9 +123,18 @@ export default function App() {
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans p-6 md:p-12">
       <div className="max-w-4xl mx-auto">
-        <header className="mb-12">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Word 表格圖片填充器</h1>
-          <p className="text-neutral-500">上傳含表格的 Word 範本，自動將圖片依序填入並無限複製表格。</p>
+        <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight mb-2">Word 表格圖片填充器</h1>
+            <p className="text-neutral-500">上傳含表格的 Word 範本，自動將圖片依序填入並無限複製表格。</p>
+          </div>
+          <button
+            onClick={() => window.open(window.location.href, '_blank')}
+            className="flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-neutral-900 transition-colors bg-white px-4 py-2 rounded-full border border-neutral-200 shadow-sm"
+          >
+            <ExternalLink className="w-4 h-4" />
+            以新分頁開啟
+          </button>
         </header>
 
         <div className="grid md:grid-cols-2 gap-8">

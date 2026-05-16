@@ -24,12 +24,12 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(cors());
-  app.use(express.json({ limit: '50mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+  app.use(express.json({ limit: '100mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
   const upload = multer({ 
     dest: UPLOADS_DIR,
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB per file
+    limits: { fileSize: 20 * 1024 * 1024 } // 20MB per file
   });
 
   // Add a health check
@@ -158,6 +158,7 @@ async function startServer() {
                   
                   // Detect cell width specifically for THIS placeholder in the table
                   let cellWidthTwips = getCellWidthForPlaceholder(targetTable, j) || globalMaxWidth;
+                  console.log(`- Image ${imgIdx} (placeholder ${j}): detected width ${cellWidthTwips} twips`);
                   
                   // Ensure it's not too small (A4 is ~10000-11000 twips wide total)
                   // If it's very small (<2000), it's likely a label column accidentally matched
@@ -255,6 +256,19 @@ async function startServer() {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
+
+  // Global error handler for JSON responses - MUST BE AFTER ALL ROUTES
+  app.use((err: any, req: any, res: any, next: any) => {
+    if (res.headersSent) {
+      return next(err);
+    }
+    console.error("Global Error Handler Catch:", err);
+    res.status(err.status || 500).json({ 
+      error: err.message || "伺服器內部錯誤",
+      code: err.code,
+      stack: process.env.NODE_ENV !== "production" ? err.stack : undefined
+    });
+  });
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
